@@ -15,6 +15,11 @@ on:
     branches:
       - bricklayers
   workflow_dispatch:
+    inputs:
+      export_deps:
+        description: 'Publish the compiled dependencies as a downloadable artifact'
+        type: boolean
+        default: false
 
 concurrency:
   group: build-windows-bricklayers
@@ -36,9 +41,11 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Cache dependencies
+      # restore/save are split so the dependencies are cached as soon as they are built,
+      # even if the PrusaSlicer build fails afterwards.
+      - name: Restore dependencies
         id: deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: C:/d/destdir
           key: deps-win64-v2-${{ hashFiles('deps/**') }}
@@ -51,6 +58,23 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build $env:DEPS_BUILD --config Release -- /m:1 /nodeReuse:false 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/deps-build.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Save dependencies to cache
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/d/destdir
+          key: deps-win64-v2-${{ hashFiles('deps/**') }}
+
+      # Downloadable copy for local builds: extract to C:\d\destdir and pass
+      # -DCMAKE_PREFIX_PATH=C:/d/destdir/usr/local (requires VS 2022 17.14 or newer).
+      - name: Publish dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true' || inputs.export_deps
+        uses: actions/upload-artifact@v4
+        with:
+          name: deps-win64-msvc-release
+          path: C:/d/destdir
+          retention-days: 14
 
       - name: Configure PrusaSlicer
         shell: pwsh
