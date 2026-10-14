@@ -22,6 +22,9 @@ concurrency:
 
 env:
   DEPS_BUILD: C:/d
+  # Each dependency already builds with -m:<cores> internally (cmake/modules/AddCMakeProject.cmake);
+  # building the outer deps project in parallel too exhausts the runner (MSB4223).
+  MSBUILDDISABLENODEREUSE: "1"
 
 jobs:
   build:
@@ -46,7 +49,7 @@ jobs:
         run: |
           cmake -S deps -B $env:DEPS_BUILD -G "Visual Studio 17 2022" -A x64 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/deps-configure.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cmake --build $env:DEPS_BUILD --config Release --parallel 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/deps-build.log"
+          cmake --build $env:DEPS_BUILD --config Release -- /m:1 /nodeReuse:false 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/deps-build.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Configure PrusaSlicer
@@ -65,7 +68,7 @@ jobs:
         if: failure()
         shell: pwsh
         run: |
-          $pattern = 'error C\d+|error LNK\d+|error MSB\d+|fatal error|CMake Error|: error|FAILED|Error \d+|failed with|Each download failed'
+          $pattern = 'error MSB|error C\d+|error LNK\d+|error MSB\d+|fatal error|CMake Error|: error|FAILED|Error \d+|failed with|Each download failed'
           foreach ($name in 'deps-configure', 'deps-build', 'configure', 'build') {
             $log = "$env:RUNNER_TEMP/$name.log"
             if (-not (Test-Path $log)) { continue }
