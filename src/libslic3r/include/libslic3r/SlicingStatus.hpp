@@ -102,6 +102,9 @@ enum class ErrorCode
     NoPadGenerated, // _u8L("No pad can be generated for this model with the current configuration")
     UnprintableObjects, // _u8L("There are unprintable objects. Try to adjust support settings to make the objects printable.")
     UnsupportedOutputFormat, // _u8L("Unsupported output format")
+
+    // Fork additions (appended to keep the numeric values of upstream codes stable)
+    BrickLayersArcFitting, // _u8L("Brick layers cannot be used together with Arc fitting. Disable Arc fitting or Brick layers.")
 };
 
 using PlaceholderParserErrorPayload = std::map<std::string, std::string>;

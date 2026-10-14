@@ -723,7 +723,21 @@ Biz::libpgcode::ProcessorResult GCodeGenerator::do_export(
     Processor processor(std::move(processor_config));
     GCodeOutputStream file(processor);
 
+    if (print->config().get<bool>("brick_layers")) {
+        GCode::BrickLayers::Params brick_params;
+        brick_params.extrusion_multiplier = print->config().get<double>("brick_layers_extrusion_multiplier");
+        brick_params.start_at_layer       = print->config().get<int>("brick_layers_start_layer");
+        brick_params.enable_header        = true;
+        brick_params.header_info          = {
+            {"Implementation", "PrusaSlicer built-in (C++ port of bricklayers.py v0.2.1)"},
+            {"Starting at Layer", std::to_string(brick_params.start_at_layer)},
+            {"Extrusion Multiplier", GCode::BrickLayers::py_repr(brick_params.extrusion_multiplier)},
+        };
+        file.enable_brick_layers(std::move(brick_params));
+    }
+
     const Domain::ExtraPrintStatistics extra_print_statistics{this->_do_export(*print, file, serialized_config)};
+    file.finish();
 
     if (! m_placeholder_parser_integration.failed_templates.empty()) {
         // G-code export proceeded, but some of the PlaceholderParser substitutions failed.
@@ -3343,7 +3357,31 @@ void GCodeGenerator::GCodeOutputStream::write(const char *what)
     if (what != nullptr) {
         //FIXME don't allocate a string, maybe process a batch of lines?
         std::string gcode(m_find_replace ? m_find_replace->process_layer(what) : what);
-        m_processor.process_buffer(std::move(gcode));
+        if (m_brick_layers) {
+            // Brick Layers releases whole layers at a time; until then it keeps the text buffered.
+            std::string transformed;
+            m_brick_layers->feed(gcode, transformed);
+            if (!transformed.empty())
+                m_processor.process_buffer(std::move(transformed));
+        } else {
+            m_processor.process_buffer(std::move(gcode));
+        }
+    }
+}
+
+void GCodeGenerator::GCodeOutputStream::enable_brick_layers(GCode::BrickLayers::Params params)
+{
+    m_brick_layers = std::make_unique<GCode::BrickLayers::Processor>(std::move(params));
+}
+
+void GCodeGenerator::GCodeOutputStream::finish()
+{
+    if (m_brick_layers) {
+        std::string transformed;
+        m_brick_layers->finish(transformed);
+        m_brick_layers.reset();
+        if (!transformed.empty())
+            m_processor.process_buffer(std::move(transformed));
     }
 }
 

@@ -4497,6 +4497,48 @@ void fdm_config_init_fn(ConfigDefinitions& defs)
                    "to collapse them into a single trace).");
     def->init_fn = init_with(true);
 
+    // Brick Layers (fork feature): port of https://github.com/GeekDetour/BrickLayers
+    def = defs.add("brick_layers", typeid(bool));
+    def->location = Print;
+    def->label = L("Brick layers");
+    def->option_group = ConfigItemDef::OptionGroup::Print_WallsPerimeters_WallsQuality;
+    def->category = ConfigItemDef::Category::Print_WallsPerimeters;
+    def->order = 8;
+    def->gui_type = ConfigItemDef::GUIType::checkbox;
+    def->tooltip = L("Interlocking perimeters (\"Brick Layers\" by Geek Detour). Every other inner perimeter "
+                     "loop is printed half a layer higher, turning the stacked arrangement of the wall beads "
+                     "into a hexagonal one, which increases the strength between layers.\n"
+                     "Works best with the default inner/outer perimeter order and requires Arc fitting "
+                     "to be disabled. Not intended for sequential (complete objects) printing.");
+    def->init_fn = init_with(false);
+
+    def = defs.add("brick_layers_start_layer", typeid(int));
+    def->location = Print;
+    def->label = L("Brick layers: start at layer");
+    def->option_group = ConfigItemDef::OptionGroup::Print_WallsPerimeters_WallsQuality;
+    def->category = ConfigItemDef::Category::Print_WallsPerimeters;
+    def->order = 9;
+    def->gui_type = ConfigItemDef::GUIType::spinbox;
+    def->tooltip = L("First layer (counting from 1) to which Brick layers is applied. Layers below are left "
+                     "untouched. The extrusion of the deferred loops on this layer is boosted by 50% to "
+                     "fill the gap left by the half-height step.");
+    def->min = 1;
+    def->max = 1000;
+    def->init_fn = init_with(3);
+
+    def = defs.add("brick_layers_extrusion_multiplier", typeid(double));
+    def->location = Print;
+    def->label = L("Brick layers: extrusion multiplier");
+    def->option_group = ConfigItemDef::OptionGroup::Print_WallsPerimeters_WallsQuality;
+    def->category = ConfigItemDef::Category::Print_WallsPerimeters;
+    def->order = 10;
+    def->gui_type = ConfigItemDef::GUIType::textfield;
+    def->tooltip = L("Extrusion multiplier applied to all inner perimeters processed by Brick layers. "
+                     "Slight over-extrusion (e.g. 1.05) helps the shifted loops fuse with their neighbours.");
+    def->min = 0.5;
+    def->max = 2.0;
+    def->init_fn = init_with(1.05);
+
     def = defs.add("toolchange_gcode", typeid(std::string));
     def->location = Printer;
     def->category = ConfigItemDef::Category::Printer_CustomGCode;

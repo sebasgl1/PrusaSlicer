@@ -12,6 +12,7 @@
 #include "Slic3r/Biz/Parser/PlaceholderParser.hpp"
 #include "Geometry/ArcWelder.hpp"
 #include "libslic3r/GCode/AvoidCrossingPerimeters.hpp"
+#include "libslic3r/GCode/BrickLayers.hpp"
 #include "libslic3r/GCode/CoolingBuffer.hpp"
 #include "libslic3r/GCode/FindReplace.hpp"
 #include "libslic3r/GCode/GCodeWriter.hpp"
@@ -187,7 +188,15 @@ private:
         // Formats and write into a file the given data. 
         void write_format(const char* format, ...);
 
+        // Brick Layers (fork feature): when enabled, the G-code text is transformed on its
+        // way to the processor, so the preview, time estimates and binary G-code all see
+        // the interlocked perimeters.
+        void enable_brick_layers(GCode::BrickLayers::Params params);
+        // Flushes the last buffered layer. Must be called before the processor is finalized.
+        void finish();
+
     private:
+        std::unique_ptr<GCode::BrickLayers::Processor> m_brick_layers;
         // Find-replace post-processor to be called before GCodePostProcessor.
         GCodeFindReplace *m_find_replace { nullptr };
         // If suppressed, the backoup holds m_find_replace.

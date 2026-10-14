@@ -201,6 +201,8 @@ set(SLIC3R_SOURCES
     src/libslic3r/GCode/GCodeWriter.hpp
     src/libslic3r/GCode/GCodeWriterConfig.cpp
     src/libslic3r/GCode/GCodeWriterConfig.hpp
+    src/libslic3r/GCode/BrickLayers.cpp
+    src/libslic3r/GCode/BrickLayers.hpp
     src/libslic3r/GCode/LabelObjects.cpp
     src/libslic3r/GCode/LabelObjects.hpp
     src/libslic3r/GCode/ModelVisibility.cpp

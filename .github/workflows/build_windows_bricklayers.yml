@@ -1,0 +1,59 @@
+# Self-contained Windows build for the Brick Layers fork.
+# The upstream build_windows.yml relies on Prusa's private actions repository
+# and cannot run in a fork, so this workflow builds everything on the runner.
+# The first run builds all dependencies (several hours); later runs reuse the
+# dependency cache as long as nothing under deps/ changes.
+name: Build windows (Brick Layers fork)
+
+on:
+  push:
+    branches:
+      - bricklayers
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: deps/build/destdir
+          key: deps-win64-${{ hashFiles('deps/**') }}
+
+      - name: Build dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          cmake -S deps -B deps/build -G "Visual Studio 17 2022" -A x64
+          cmake --build deps/build --config Release --parallel
+
+      - name: Configure PrusaSlicer
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DCMAKE_PREFIX_PATH="$PWD/deps/build/destdir/usr/local"
+          -DSLIC3R_BUILD_TESTS=OFF
+
+      - name: Build PrusaSlicer
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - name: Collect binaries
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "prusa-slicer.exe" | Select-Object -First 1
+          if (-not $exe) { $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" | Where-Object { $_.Name -like "*rusa*" } | Select-Object -First 1 }
+          if (-not $exe) { throw "PrusaSlicer executable not found" }
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item -Recurse "$($exe.DirectoryName)\*" package\
+          Copy-Item -Recurse resources package\resources -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrusaSlicer-BrickLayers-win64
+          path: package

@@ -195,6 +195,10 @@ std::string to_display_string(Biz::Slicing::ErrorCode code)
         return _u8L("Unable to parse custom parameters.");
     case ErrorCode::UnsupportedOutputFormat:
         return _u8L("Unsupported output format.");
+    case ErrorCode::BrickLayersArcFitting:
+        return _u8L(
+            "Brick layers cannot be used together with Arc fitting. Disable Arc fitting or Brick layers."
+        );
     }
     return _u8L("Unknown error.");
 }

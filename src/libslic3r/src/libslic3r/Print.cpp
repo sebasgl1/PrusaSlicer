@@ -669,6 +669,12 @@ DONE:;
         );
     }
 
+    if (m_config.get<bool>("brick_layers")
+        && m_config.get<Domain::ArcFittingType>("arc_fitting") != Domain::ArcFittingType::Disabled)
+    {
+        errors.push_back(Error{ErrorCode::BrickLayersArcFitting, {"brick_layers", "arc_fitting"}});
+    }
+
     if (m_config.get<bool>("spiral_vase")) {
         size_t total_copies_count = 0;
         for (const PrintObject* object : m_objects)
