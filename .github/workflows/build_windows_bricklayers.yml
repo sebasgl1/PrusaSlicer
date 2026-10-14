@@ -79,6 +79,16 @@ jobs:
       - name: Configure PrusaSlicer
         shell: pwsh
         run: |
+          # cmake/modules/WinSDK.cmake finds the WinRT headers (Win10 mesh repair) through the
+          # variables a VS developer prompt defines; set them since this is a plain shell.
+          $kits = "${env:ProgramFiles(x86)}\Windows Kits\10"
+          $sdk = Get-ChildItem "$kits\Include" -Directory |
+                 Where-Object { Test-Path "$($_.FullName)\winrt\windows.graphics.printing3d.h" } |
+                 Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdk) { throw "No Windows SDK with WinRT headers found under $kits\Include" }
+          $env:WindowsSdkDir = "$kits\"
+          $env:WindowsSDKVersion = "$($sdk.Name)\"
+          Write-Output "Using Windows SDK $($sdk.Name)"
           cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$env:DEPS_BUILD/destdir/usr/local" -DSLIC3R_BUILD_TESTS=OFF 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/configure.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
