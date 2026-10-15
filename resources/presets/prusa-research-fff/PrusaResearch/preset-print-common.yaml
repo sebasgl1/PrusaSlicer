@@ -1,7 +1,7 @@
 kind: print
 id: '*common*'
 values:
-  arc_fitting: emit_center
+  arc_fitting: disabled # fork: off by default, required by Brick layers
   external_perimeters_first: 0
   extra_perimeters: 0
   fill_angle: 45
