@@ -114,11 +114,11 @@ if (-not (Test-Path $prefix)) {
     Fail "No existe $prefix" "Descarga el artefacto 'deps-win64-msvc-release' de GitHub Actions y descomprímelo para que quede $prefix"
 } else {
     $markers = [ordered]@{
-        "Boost"     = "include\boost\version.hpp"
+        "Boost"     = "lib\cmake\Boost-1.86.0"
         "wxWidgets" = "lib\cmake\wxWidgets\wxWidgetsConfig.cmake"
         "CGAL"      = "lib\cmake\CGAL\CGALConfig.cmake"
         "TBB"       = "lib\cmake\TBB\TBBConfig.cmake"
-        "OpenVDB"   = "lib\cmake\OpenVDB"
+        "OpenVDB"   = "include\openvdb\openvdb.h"
         "OCCT"      = "lib\cmake\opencascade"
         "z3"        = "lib\cmake\z3\Z3Config.cmake"
         "Catch2"    = "lib\cmake\Catch2"
@@ -126,6 +126,7 @@ if (-not (Test-Path $prefix)) {
     $missing = @()
     foreach ($k in $markers.Keys) {
         $found = Test-Path (Join-Path $prefix $markers[$k])
+        if (-not $found -and $k -eq "Boost") { $found = [bool](Get-ChildItem $prefix -Recurse -Filter "version.hpp" -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -match '\\boost$' } | Select-Object -First 1) }
         if (-not $found -and $k -eq "OCCT") { $found = [bool](Get-ChildItem $prefix -Recurse -Filter "OpenCASCADEConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1) }
         if (-not $found) { $missing += $k }
     }
