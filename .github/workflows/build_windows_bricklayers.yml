@@ -117,12 +117,18 @@ jobs:
       - name: Collect binaries
         shell: pwsh
         run: |
-          $exe = Get-ChildItem -Path build -Recurse -Filter "prusa-slicer.exe" | Select-Object -First 1
-          if (-not $exe) { $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" | Where-Object { $_.Name -like "*rusa*" } | Select-Object -First 1 }
-          if (-not $exe) { throw "PrusaSlicer executable not found" }
+          # PrusaSlicer 3.0 builds the app as slic3r-app-launcher.exe; next to it, "resources"
+          # is a junction into the source tree, so the real folder is copied instead.
+          $exe = Get-ChildItem -Path build -Recurse -Filter "slic3r-app-launcher.exe" |
+                 Where-Object { $_.DirectoryName -match '\\Release$' } | Select-Object -First 1
+          if (-not $exe) { throw "slic3r-app-launcher.exe not found under build" }
+          Write-Output "Found $($exe.FullName)"
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item -Recurse "$($exe.DirectoryName)\*" package\
-          Copy-Item -Recurse resources package\resources -ErrorAction SilentlyContinue
+          Get-ChildItem $exe.DirectoryName -File | Where-Object { $_.Extension -in '.exe', '.dll' } |
+              Copy-Item -Destination package
+          Copy-Item -Recurse resources package\resources
+          Copy-Item doc\BrickLayers.md package\
+          Get-ChildItem package -File | Format-Table Name, Length
 
       - uses: actions/upload-artifact@v4
         with:
