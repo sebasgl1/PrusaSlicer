@@ -26,6 +26,9 @@ Ventajas frente al script de post-procesado:
 | Multiplicador de extrusión | `brick_layers_extrusion_multiplier` | 1.05 |
 
 Requisitos: **Arc fitting desactivado** (el slicer muestra un error si ambos están activos).
+En este fork, arc fitting viene **desactivado en todos los perfiles de fabricante** (incluidos los
+descargados en línea): `PresetLoader` ignora `arc_fitting` en los perfiles de sistema. Los perfiles
+que guarda el usuario conservan su valor.
 Recomendado: orden de perímetros interior → exterior (el defecto). No pensado para impresión
 secuencial (complete objects).
 

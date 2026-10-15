@@ -47,6 +47,17 @@ Domain::Preset::PresetNamesCollection to_preset_names_collection(const PresetNam
     return names;
 }
 
+// Fork policy: arc fitting is off by default in every vendor (system) profile,
+// whether bundled with the app or downloaded from the online preset repository.
+// The key is removed from system presets so the built-in default (disabled)
+// applies; user presets keep whatever value the user saved.
+void strip_vendor_defaults(Domain::Preset::PresetNode& node)
+{
+    node.values.erase("arc_fitting");
+    for (auto& variant : node.variants)
+        strip_vendor_defaults(variant);
+}
+
 } // namespace Details
 
 void PresetLoader::load(const std::string& file_name, std::mutex& mutex, PresetOrigin origin)
@@ -57,6 +68,8 @@ void PresetLoader::load(const std::string& file_name, std::mutex& mutex, PresetO
         preset.origin = origin;
         if (origin == PresetOrigin::User) {
             preset.user_file = file_name;
+        } else {
+            Details::strip_vendor_defaults(preset);
         }
         Details::collect_names(m_preset_names, preset, preset.kind, origin, preset.id);
         m_presets[preset.kind].emplace_back(std::move(preset));
@@ -68,6 +81,8 @@ void PresetLoader::load_from_string(std::string_view source, PresetOrigin origin
     Yaml::parse_all_documents_in_string(source, [this, origin](const auto& doc) {
         auto preset = Yaml::parse_struct_unwrap<RootPresetNode>(doc);
         preset.origin = origin;
+        if (origin != PresetOrigin::User)
+            Details::strip_vendor_defaults(preset);
         Details::collect_names(m_preset_names, preset, preset.kind, origin, preset.id);
         m_presets[preset.kind].emplace_back(std::move(preset));
     });
