@@ -57,7 +57,7 @@ Desde "x64 Native Tools Command Prompt for VS 2022", en la raíz del repo:
 ```cmd
 cmake -S deps -B deps/build -G "Visual Studio 17 2022" -A x64
 cmake --build deps/build --config Release --parallel
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="%CD%/deps/build/destdir/usr/local" -DSLIC3R_BUILD_TESTS=OFF
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="%CD%/deps/build/destdir/usr/local" -DSLIC3R_BUILD_TESTS=OFF -DSLIC3R_PCH=OFF
 cmake --build build --config Release --parallel
 ```
 

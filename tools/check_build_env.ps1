@@ -169,7 +169,7 @@ Write-Host ""
 if ($script:fails -eq 0) {
     Write-Host "Todo listo para compilar ($($script:warns) avisos opcionales)." -ForegroundColor Green
     Write-Host "Abre 'x64 Native Tools Command Prompt for VS 2022' y ejecuta:" -ForegroundColor White
-    Write-Host "  cmake -S . -B build -G `"Visual Studio 17 2022`" -A x64 -DCMAKE_PREFIX_PATH=`"$($DepsPath -replace '\\','/')/usr/local`" -DSLIC3R_BUILD_TESTS=OFF"
+    Write-Host "  cmake -S . -B build -G `"Visual Studio 17 2022`" -A x64 -DCMAKE_PREFIX_PATH=`"$($DepsPath -replace '\\','/')/usr/local`" -DSLIC3R_BUILD_TESTS=OFF -DSLIC3R_PCH=OFF"
     Write-Host "  cmake --build build --config Release --parallel"
 } else {
     Write-Host "Faltan $($script:fails) cosa(s) y hay $($script:warns) aviso(s). Revisa los puntos marcados arriba." -ForegroundColor Red

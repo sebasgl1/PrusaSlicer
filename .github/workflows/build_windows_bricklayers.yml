@@ -89,7 +89,7 @@ jobs:
           $env:WindowsSdkDir = "$kits\"
           $env:WindowsSDKVersion = "$($sdk.Name)\"
           Write-Output "Using Windows SDK $($sdk.Name)"
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$env:DEPS_BUILD/destdir/usr/local" -DSLIC3R_BUILD_TESTS=OFF 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/configure.log"
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$env:DEPS_BUILD/destdir/usr/local" -DSLIC3R_BUILD_TESTS=OFF -DSLIC3R_PCH=OFF 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/configure.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build PrusaSlicer
